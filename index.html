@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free AI Video Maker</title>
+<style>
+body {
+  margin: 0;
+  padding: 20px;
+  background: #101827;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
+h1 { color: #55e6a5; }
+textarea {
+  width: 95%;
+  height: 110px;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+button {
+  padding: 14px;
+  margin: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: #16b981;
+  color: white;
+  font-size: 16px;
+}
+canvas {
+  width: 100%;
+  max-width: 480px;
+  background: black;
+  border-radius: 12px;
+  margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<h1>🎬 Free AI Video Maker</h1>
+<p>Apna video topic likhiye</p>
+
+<textarea id="topic" placeholder="Yahan apna video topic likhein..."></textarea>
+
+<br>
+<button onclick="previewVoice()">🔊 Voice Suno</button>
+<button onclick="makeVideo()">🎬 Video Banao</button>
+
+<br>
+<canvas id="screen" width="720" height="1280"></canvas>
+
+<p id="status">Aapka video yahan banega.</p>
+
+<script>
+const canvas = document.getElementById("screen");
+const ctx = canvas.getContext("2d");
+
+let recording = false;
+let frame = 0;
+
+function previewVoice() {
+  let text = document.getElementById("topic").value;
+  if (!text) {
+    alert("Pehle topic likhiye");
+    return;
+  }
+  speechSynthesis.cancel();
+  let voice = new SpeechSynthesisUtterance(text);
+  voice.lang = "hi-IN";
+  speechSynthesis.speak(voice);
+}
+
+function draw() {
+  ctx.fillStyle = "#101827";
+  ctx.fillRect(0,0,720,1280);
+
+  ctx.fillStyle = "#16b981";
+  ctx.font = "bold 48px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("MUJAHIDI MISSION",360,180);
+
+  let words = document.getElementById("topic").value || "Welcome";
+  ctx.fillStyle = "white";
+  ctx.font = "bold 48px Arial";
+
+  let lines = words.match(/.{1,22}(\s|$)/g) || [words];
+  lines.slice(0,8).forEach((line,i)=>{
+    ctx.fillText(line.trim(),360,500+i*75);
+  });
+
+  ctx.fillStyle = "#55e6a5";
+  ctx.font = "30px Arial";
+  ctx.fillText("Islamic Video",360,1100);
+
+  if(recording) {
+    frame++;
+    requestAnimationFrame(draw);
+  }
+}
+
+function makeVideo() {
+  if(!document.getElementById("topic").value) {
+    alert("Pehle video topic likhiye");
+    return;
+  }
+
+  if(!canvas.captureStream || !window.MediaRecorder) {
+    alert("Aapka browser video recording support nahi karta.");
+    return;
+  }
+
+  recording = true;
+  frame = 0;
+  draw();
+
+  let stream = canvas.captureStream(25);
+  let recorder = new MediaRecorder(stream);
+  let chunks = [];
+
+  recorder.ondataavailable = e => {
+    if(e.data.size > 0) chunks.push(e.data);
+  };
+
+  recorder.onstop = () => {
+    let blob = new Blob(chunks,{type:"video/webm"});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "my-video.webm";
+    a.click();
+    document.getElementById("status").innerText =
+      "Video download ho gaya!";
+    recording = false;
+  };
+
+  recorder.start();
+  document.getElementById("status").innerText =
+    "Video ban raha hai... 15 seconds wait karein.";
+
+  setTimeout(()=>{
+    recording = false;
+    recorder.stop();
+  },15000);
+}
+</script>
+
+</body>
+</html>
