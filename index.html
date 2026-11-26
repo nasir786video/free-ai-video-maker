@@ -1,73 +1,28 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free Story Video Maker</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Free Animated Video Maker</title>
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  padding:18px;
-  background:#101827;
-  color:white;
-  font-family:Arial,sans-serif;
-}
-.app{
-  max-width:650px;
-  margin:auto;
-}
-h1{color:#65e6b4;text-align:center}
+body{margin:0;padding:16px;background:#101827;color:white;font-family:Arial}
+.app{max-width:650px;margin:auto}
+h1{text-align:center;color:#65e6b4}
 p{color:#cbd5e1;line-height:1.5}
-label{
-  display:block;
-  margin-top:16px;
-  margin-bottom:7px;
-  font-weight:bold;
-}
-input,select{
-  width:100%;
-  padding:13px;
-  border-radius:9px;
-  border:1px solid #475569;
-  background:#1e293b;
-  color:white;
-  font-size:16px;
-}
-button{
-  width:100%;
-  padding:14px;
-  margin-top:15px;
-  border:0;
-  border-radius:9px;
-  background:#20c997;
-  color:#06251d;
-  font-size:16px;
-  font-weight:bold;
-}
-.scene{
-  background:#1e293b;
-  border:1px solid #475569;
-  border-radius:12px;
-  padding:15px;
-  margin-top:14px;
-}
-.scene h3{color:#65e6b4}
-.scene p{white-space:pre-wrap}
-.small{
-  background:#334155;
-  color:white;
-}
-#results{margin-top:20px}
+label{display:block;margin:15px 0 7px;font-weight:bold}
+input,select{width:100%;padding:13px;border-radius:9px;background:#1e293b;color:white;border:1px solid #475569;font-size:16px}
+button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:9px;background:#20c997;color:#06251d;font-size:16px;font-weight:bold}
+button:disabled{opacity:.5}
+canvas{width:100%;background:#172554;border-radius:12px;margin-top:15px}
+#status{margin-top:12px;color:#65e6b4}
 </style>
 </head>
-
 <body>
 <div class="app">
-
-<h1>🎬 Free Story Video Maker</h1>
-<p>Apna topic likhiye. App aapke liye kahani aur alag-alag scenes taiyar karega.</p>
+<h1>🎬 AI Animated Video Maker</h1>
+<p>Apna topic likhiye aur animated cartoon video banaiye.</p>
 
 <label>Video Category</label>
 <select id="category">
@@ -77,11 +32,10 @@ button{
 <option>Comedy Story</option>
 <option>Adventure Story</option>
 <option>Educational Video</option>
-<option>Nature Video</option>
 </select>
 
 <label>Kahani ka Topic</label>
-<input id="topic" placeholder="Jaise: Ek sher aur ek chhota bachcha">
+<input id="topic" placeholder="Jaise: Sher aur khargosh">
 
 <label>Voice Language</label>
 <select id="language">
@@ -92,115 +46,248 @@ button{
 
 <label>Video Size</label>
 <select id="ratio">
-<option value="9:16">9:16 - Shorts / Reels</option>
-<option value="16:9">16:9 - YouTube Long</option>
+<option value="portrait">9:16 Shorts / Reels</option>
+<option value="landscape">16:9 YouTube Long</option>
 </select>
 
-<button onclick="makeStory()">✨ Kahani Banao</button>
+<button id="make" onclick="startVideo()">🎥 Animated Video Banao</button>
+<button onclick="playVoice()">🔊 Hindi Voice Suno</button>
+<button id="stop" onclick="stopVideo()" disabled>⏹ Video Rokkar Download Karo</button>
 
-<div id="results"></div>
-
+<canvas id="screen"></canvas>
+<div id="status">Video banane ke liye topic likhiye.</div>
 </div>
 
 <script>
-let scenes = [];
+const canvas=document.getElementById("screen");
+const ctx=canvas.getContext("2d");
+
+let running=false;
+let frame=0;
+let recorder=null;
+let chunks=[];
+let audioContext=null;
+let musicOsc=null;
+let musicGain=null;
+let animationId=null;
+let story=[];
 
 function makeStory(){
+ const topic=document.getElementById("topic").value.trim();
+ if(!topic){alert("Pehle topic likhiye");return false;}
 
- const topic = document.getElementById("topic").value.trim();
- const category = document.getElementById("category").value;
-
- if(!topic){
-   alert("Pehle kahani ka topic likhiye.");
-   return;
- }
-
- const title = topic;
- const categoryText = category;
-
- scenes = [
-  {
-   heading:"Scene 1 - Shuruaat",
-   narration:"Ek din ki baat hai. "+topic+". Is kahani ki shuruaat ek dilchasp jagah se hoti hai.",
-   visual:"Show the opening scene of "+topic+". Establish the location, characters and atmosphere. "+categoryText+" style."
-  },
-  {
-   heading:"Scene 2 - Nayi Pareshani",
-   narration:"Kuch der baad ek nayi pareshani saamne aati hai. Ab sabke saamne ek bada sawaal hai ki aage kya hoga.",
-   visual:"Show a new challenge or surprising event connected to "+topic+". "+categoryText+" style."
-  },
-  {
-   heading:"Scene 3 - Koshish",
-   narration:"Lekin himmat nahi haari jaati. Kirdar apni samajh aur himmat se hal dhoondhne ki koshish karta hai.",
-   visual:"Show the main character trying to solve the problem. Expressive scene, cinematic composition."
-  },
-  {
-   heading:"Scene 4 - Anjaam",
-   narration:"Aakhirkaar koshish rang laati hai. Kahani ek naye mod par pahunchti hai aur sabko ek achhi seekh milti hai.",
-   visual:"Show the conclusion of "+topic+". A meaningful and satisfying ending. "+categoryText+" style."
-  }
+ story=[
+  "Ek din ki baat hai. "+topic+".",
+  "Achanak ek nayi pareshani saamne aa gayi.",
+  "Sabne milkar us pareshani ka hal dhoondha.",
+  "Aakhirkaar sab kuch achha ho gaya. Is kahani se humein seekh milti hai ki achhe kaam ka achha anjaam hota hai."
  ];
-
- let html = "<h2>📖 Aapki Kahani: "+escapeHTML(title)+"</h2>";
- html += "<p>Category: "+escapeHTML(categoryText)+"</p>";
-
- scenes.forEach((scene,index)=>{
-   html += `
-   <div class="scene">
-    <h3>${scene.heading}</h3>
-    <p><b>Voice / Narration:</b><br>${escapeHTML(scene.narration)}</p>
-    <p><b>Image Prompt:</b><br>${escapeHTML(scene.visual)}</p>
-    <button class="small" onclick="speakScene(${index})">🔊 Voice Suno</button>
-   </div>`;
- });
-
- html += `
- <button onclick="downloadStory()">⬇️ Kahani Download Karo</button>
- <p>Agla kaam: Har scene ke Image Prompt se alag image banakar video editor mein jodiye.</p>
- `;
-
- document.getElementById("results").innerHTML = html;
+ return true;
 }
 
-function speakScene(index){
- if(!("speechSynthesis" in window)){
-   alert("Is browser mein voice feature available nahi hai.");
-   return;
+function drawScene(){
+ const portrait=document.getElementById("ratio").value==="portrait";
+ canvas.width=portrait?720:1280;
+ canvas.height=portrait?1280:720;
+
+ let w=canvas.width,h=canvas.height;
+ let scene=Math.min(3,Math.floor(frame/300));
+ let t=frame/30;
+
+ let bg=ctx.createLinearGradient(0,0,0,h);
+ bg.addColorStop(0,"#62b9f5");
+ bg.addColorStop(1,"#e0f2fe");
+ ctx.fillStyle=bg;
+ ctx.fillRect(0,0,w,h);
+
+ // Sun
+ ctx.fillStyle="#ffdf65";
+ ctx.beginPath();
+ ctx.arc(w*.82,h*.13,55,0,Math.PI*2);
+ ctx.fill();
+
+ // Hills
+ ctx.fillStyle="#65b96c";
+ ctx.beginPath();
+ ctx.moveTo(0,h*.65);
+ ctx.quadraticCurveTo(w*.3,h*.43,w*.55,h*.65);
+ ctx.quadraticCurveTo(w*.8,h*.45,w,h*.62);
+ ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();
+
+ // Ground
+ ctx.fillStyle="#39864b";
+ ctx.fillRect(0,h*.78,w,h*.22);
+
+ // Trees
+ for(let i=0;i<5;i++){
+  let x=i*w/4;
+  ctx.fillStyle="#754c28";
+  ctx.fillRect(x-12,h*.53,24,h*.25);
+  ctx.fillStyle="#167b43";
+  ctx.beginPath();
+  ctx.arc(x,h*.51,48,0,Math.PI*2);
+  ctx.fill();
+ }
+
+ // Animated characters
+ let x1=w*.3+Math.sin(t)*w*.06;
+ let x2=w*.68-Math.sin(t)*w*.06;
+
+ function character(x,y,emoji){
+  ctx.font=(portrait?100:90)+"px Arial";
+  ctx.textAlign="center";
+  ctx.fillText(emoji,x,y);
+ }
+
+ character(x1,h*.76,"🦁");
+ character(x2,h*.76,"🐰");
+
+ // Scene title
+ ctx.fillStyle="#10243b";
+ ctx.textAlign="center";
+ ctx.font="bold "+(portrait?42:46)+"px Arial";
+ ctx.fillText("Scene "+(scene+1),w/2,h*.12);
+
+ // Story subtitles
+ ctx.fillStyle="rgba(0,0,0,.72)";
+ ctx.fillRect(20,h*.83,w-40,h*.13);
+ ctx.fillStyle="white";
+ ctx.font=(portrait?27:30)+"px Arial";
+ let words=story[scene]||"Ek pyari si kahani";
+ let maxWidth=w-65;
+ let lines=[];
+ let line="";
+ words.split(" ").forEach(word=>{
+  let test=line+word+" ";
+  if(ctx.measureText(test).width>maxWidth){
+   lines.push(line);line=word+" ";
+  }else line=test;
+ });
+ lines.push(line);
+ lines.slice(0,3).forEach((l,i)=>{
+  ctx.fillText(l,w/2,h*.875+i*38);
+ });
+
+ // Movement
+ frame++;
+ if(frame>=1200){
+  frame=0;
+ }
+}
+
+function animate(){
+ if(!running)return;
+ drawScene();
+ animationId=requestAnimationFrame(animate);
+}
+
+function startMusic(){
+ audioContext=new (window.AudioContext||window.webkitAudioContext)();
+ let destination=audioContext.createMediaStreamDestination();
+ musicGain=audioContext.createGain();
+ musicGain.gain.value=.035;
+ musicGain.connect(destination);
+ musicOsc=audioContext.createOscillator();
+ musicOsc.type="sine";
+ musicOsc.frequency.value=261.63;
+ musicOsc.connect(musicGain);
+ musicOsc.start();
+
+ return destination.stream;
+}
+
+function startVideo(){
+ if(!makeStory())return;
+ if(!canvas.captureStream||!window.MediaRecorder){
+  alert("Aapka browser video recording support nahi karta.");
+  return;
+ }
+ if(running)return;
+
+ frame=0;
+ running=true;
+ chunks=[];
+
+ try{
+  const musicStream=startMusic();
+  const videoStream=canvas.captureStream(25);
+  musicStream.getAudioTracks().forEach(track=>videoStream.addTrack(track));
+
+  let mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+   ?"video/webm;codecs=vp9":"video/webm";
+
+  recorder=new MediaRecorder(videoStream,{mimeType:mime});
+
+  recorder.ondataavailable=e=>{
+   if(e.data.size>0)chunks.push(e.data);
+  };
+
+  recorder.onstop=()=>{
+   const blob=new Blob(chunks,{type:"video/webm"});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");
+   a.href=url;
+   a.download="my-animated-story.webm";
+   a.click();
+   setTimeout(()=>URL.revokeObjectURL(url),3000);
+   document.getElementById("status").innerText="Video download ho gaya!";
+   cleanup();
+  };
+
+  recorder.start();
+  document.getElementById("make").disabled=true;
+  document.getElementById("stop").disabled=false;
+  document.getElementById("status").innerText="Video ban raha hai... 40 seconds tak animation chalegi.";
+  animate();
+
+  setTimeout(()=>{
+   if(running)stopVideo();
+  },40000);
+
+ }catch(e){
+  running=false;
+  cleanup();
+  alert("Recording shuru nahi ho saki: "+e.message);
+ }
+}
+
+function stopVideo(){
+ if(!running)return;
+ running=false;
+ cancelAnimationFrame(animationId);
+ if(recorder&&recorder.state!=="inactive")recorder.stop();
+ document.getElementById("stop").disabled=true;
+ document.getElementById("make").disabled=false;
+ document.getElementById("status").innerText="Video taiyar ho raha hai...";
+}
+
+function cleanup(){
+ if(audioContext){
+  audioContext.close();
+  audioContext=null;
+ }
+ document.getElementById("make").disabled=false;
+ document.getElementById("stop").disabled=true;
+}
+
+function playVoice(){
+ if(!makeStory())return;
+ if(!window.speechSynthesis){
+  alert("Voice support available nahi hai.");
+  return;
  }
  speechSynthesis.cancel();
- let speech = new SpeechSynthesisUtterance(scenes[index].narration);
- speech.lang = document.getElementById("language").value;
- speech.rate = 0.9;
- speechSynthesis.speak(speech);
-}
-
-function downloadStory(){
- let text = "MY STORY VIDEO PLAN\n\n";
- scenes.forEach(scene=>{
-   text += scene.heading+"\n";
-   text += "Narration: "+scene.narration+"\n";
-   text += "Image Prompt: "+scene.visual+"\n\n";
- });
-
- let file = new Blob([text],{type:"text/plain;charset=utf-8"});
- let url = URL.createObjectURL(file);
- let a = document.createElement("a");
- a.href = url;
- a.download = "my-story-plan.txt";
- a.click();
- URL.revokeObjectURL(url);
-}
-
-function escapeHTML(value){
- return value.replace(/[&<>"']/g, function(ch){
-   return {
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-   }[ch];
- });
+ const language=document.getElementById("language").value;
+ let i=0;
+ function next(){
+  if(i>=story.length)return;
+  let utterance=new SpeechSynthesisUtterance(story[i++]);
+  utterance.lang=language;
+  utterance.rate=.9;
+  utterance.onend=next;
+  speechSynthesis.speak(utterance);
+ }
+ next();
 }
 </script>
 </body>
