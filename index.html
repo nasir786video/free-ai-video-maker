@@ -3,151 +3,220 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Free AI Video Maker</title>
 <style>
-body {
-  margin: 0;
-  padding: 20px;
-  background: #101827;
-  color: white;
-  font-family: Arial;
-  text-align: center;
+*{box-sizing:border-box}
+body{
+ margin:0;padding:18px;
+ background:#101827;color:white;
+ font-family:Arial;text-align:center
 }
-h1 { color: #55e6a5; }
-textarea {
-  width: 95%;
-  height: 110px;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 16px;
+h1{color:#55e6a5}
+.panel{
+ background:#1d293b;padding:16px;
+ border-radius:14px;margin:15px auto;
+ max-width:550px
 }
-button {
-  padding: 14px;
-  margin: 8px;
-  border: 0;
-  border-radius: 9px;
-  background: #16b981;
-  color: white;
-  font-size: 16px;
+textarea,select{
+ width:100%;padding:14px;margin:8px 0;
+ border-radius:9px;border:0;font-size:16px
 }
-canvas {
-  width: 100%;
-  max-width: 480px;
-  background: black;
-  border-radius: 12px;
-  margin-top: 15px;
+button{
+ background:#16b981;color:white;border:0;
+ padding:14px;margin:7px;border-radius:9px;
+ font-size:16px
+}
+canvas{
+ width:100%;max-width:350px;
+ background:#172033;border-radius:12px;
+ margin-top:15px
 }
 </style>
 </head>
 <body>
 
-<h1>🎬 Free AI Video Maker</h1>
-<p>Apna video topic likhiye</p>
+<h1>🎬 FREE VIDEO MAKER</h1>
+<p>Create your own videos</p>
 
-<textarea id="topic" placeholder="Yahan apna video topic likhein..."></textarea>
+<div class="panel">
+<h3>1. Video Topic</h3>
+<textarea id="topic" placeholder="Apni kahani ya video ka topic likhiye"></textarea>
 
-<br>
-<button onclick="previewVoice()">🔊 Voice Suno</button>
-<button onclick="makeVideo()">🎬 Video Banao</button>
+<h3>2. Video Category</h3>
+<select id="category">
+<option>Cartoon Story</option>
+<option>Animal Story</option>
+<option>Islamic Story</option>
+<option>Comedy Story</option>
+<option>Adventure Story</option>
+<option>Horror Style Story</option>
+<option>Educational Video</option>
+<option>Nature Video</option>
+</select>
 
-<br>
+<h3>3. Video Size</h3>
+<select id="size">
+<option value="short">YouTube Shorts 9:16</option>
+<option value="long">YouTube Long 16:9</option>
+</select>
+
+<h3>4. Voice Language</h3>
+<select id="language">
+<option value="hi-IN">Hindi</option>
+<option value="ur-PK">Urdu</option>
+<option value="en-US">English</option>
+</select>
+
+<button onclick="previewVoice()">🔊 Voice Preview</button>
+<button onclick="makeVideo()">🎬 Create Video</button>
+
+<p id="status">Your video is ready to create!</p>
+</div>
+
 <canvas id="screen" width="720" height="1280"></canvas>
 
-<p id="status">Aapka video yahan banega.</p>
-
 <script>
-const canvas = document.getElementById("screen");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("screen");
+const ctx=canvas.getContext("2d");
+let running=false;
+let frame=0;
+let topic="";
+let category="";
 
-let recording = false;
-let frame = 0;
-
-function previewVoice() {
-  let text = document.getElementById("topic").value;
-  if (!text) {
-    alert("Pehle topic likhiye");
-    return;
-  }
-  speechSynthesis.cancel();
-  let voice = new SpeechSynthesisUtterance(text);
-  voice.lang = "hi-IN";
-  speechSynthesis.speak(voice);
+function previewVoice(){
+ const text=document.getElementById("topic").value;
+ if(!text){alert("Pehle topic likhiye");return;}
+ speechSynthesis.cancel();
+ const voice=new SpeechSynthesisUtterance(text);
+ voice.lang=document.getElementById("language").value;
+ speechSynthesis.speak(voice);
 }
 
-function draw() {
-  ctx.fillStyle = "#101827";
-  ctx.fillRect(0,0,720,1280);
+function draw(){
+ const w=canvas.width;
+ const h=canvas.height;
+ const colors={
+  "Cartoon Story":["#32245c","#e58b43"],
+  "Animal Story":["#174c35","#83b95a"],
+  "Islamic Story":["#063e39","#d6ad54"],
+  "Comedy Story":["#663d87","#e7b34d"],
+  "Adventure Story":["#153b66","#36a7a0"],
+  "Horror Style Story":["#151522","#74466f"],
+  "Educational Video":["#163c62","#44a9b8"],
+  "Nature Video":["#174b42","#74b66c"]
+ };
+ const c=colors[category]||colors["Cartoon Story"];
+ const gradient=ctx.createLinearGradient(0,0,w,h);
+ gradient.addColorStop(0,c[0]);
+ gradient.addColorStop(1,c[1]);
+ ctx.fillStyle=gradient;
+ ctx.fillRect(0,0,w,h);
 
-  ctx.fillStyle = "#16b981";
-  ctx.font = "bold 48px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText("MUJAHIDI MISSION",360,180);
+ ctx.textAlign="center";
+ ctx.fillStyle="#ffffff";
+ ctx.font="bold 40px Arial";
+ ctx.fillText("MY VIDEO STORY",w/2,h*.13);
 
-  let words = document.getElementById("topic").value || "Welcome";
-  ctx.fillStyle = "white";
-  ctx.font = "bold 48px Arial";
+ const emojis={
+  "Cartoon Story":"🎭",
+  "Animal Story":"🦁",
+  "Islamic Story":"🌙",
+  "Comedy Story":"😄",
+  "Adventure Story":"🏕️",
+  "Horror Style Story":"🏚️",
+  "Educational Video":"📚",
+  "Nature Video":"🌳"
+ };
+ ctx.font="130px Arial";
+ ctx.fillText(emojis[category]||"🎬",w/2,h*.39);
 
-  let lines = words.match(/.{1,22}(\s|$)/g) || [words];
-  lines.slice(0,8).forEach((line,i)=>{
-    ctx.fillText(line.trim(),360,500+i*75);
-  });
+ ctx.font="bold 43px Arial";
+ const words=topic.split(" ");
+ let lines=[],line="";
+ words.forEach(word=>{
+  if((line+" "+word).length>23){
+   lines.push(line);line=word;
+  }else line+=(line?" ":"")+word;
+ });
+ if(line)lines.push(line);
 
-  ctx.fillStyle = "#55e6a5";
-  ctx.font = "30px Arial";
-  ctx.fillText("Islamic Video",360,1100);
+ lines.slice(0,7).forEach((l,i)=>{
+  ctx.fillText(l,w/2,h*.57+i*65);
+ });
 
-  if(recording) {
-    frame++;
-    requestAnimationFrame(draw);
-  }
+ ctx.font="30px Arial";
+ ctx.fillStyle="#ffffff";
+ ctx.fillText(category,w/2,h*.88);
+ ctx.font="25px Arial";
+ ctx.fillText("Created with Free Video Maker",w/2,h*.94);
+
+ if(running){
+  frame++;
+  requestAnimationFrame(draw);
+ }
 }
 
-function makeVideo() {
-  if(!document.getElementById("topic").value) {
-    alert("Pehle video topic likhiye");
-    return;
-  }
+function makeVideo(){
+ topic=document.getElementById("topic").value.trim();
+ category=document.getElementById("category").value;
 
-  if(!canvas.captureStream || !window.MediaRecorder) {
-    alert("Aapka browser video recording support nahi karta.");
-    return;
-  }
+ if(!topic){
+  alert("Pehle video topic likhiye");
+  return;
+ }
 
-  recording = true;
-  frame = 0;
-  draw();
+ if(!canvas.captureStream||!window.MediaRecorder){
+  alert("Browser video recording support nahi karta.");
+  return;
+ }
 
-  let stream = canvas.captureStream(25);
-  let recorder = new MediaRecorder(stream);
-  let chunks = [];
+ const size=document.getElementById("size").value;
+ canvas.width=size==="short"?720:1280;
+ canvas.height=size==="short"?1280:720;
 
-  recorder.ondataavailable = e => {
-    if(e.data.size > 0) chunks.push(e.data);
-  };
+ frame=0;
+ running=true;
+ draw();
 
-  recorder.onstop = () => {
-    let blob = new Blob(chunks,{type:"video/webm"});
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "my-video.webm";
-    a.click();
-    document.getElementById("status").innerText =
-      "Video download ho gaya!";
-    recording = false;
-  };
+ const stream=canvas.captureStream(25);
+ let recorder;
 
-  recorder.start();
-  document.getElementById("status").innerText =
-    "Video ban raha hai... 15 seconds wait karein.";
+ try{
+  recorder=new MediaRecorder(stream);
+ }catch(e){
+  running=false;
+  alert("Video recording start nahi ho payi.");
+  return;
+ }
 
-  setTimeout(()=>{
-    recording = false;
-    recorder.stop();
-  },15000);
+ let chunks=[];
+ recorder.ondataavailable=e=>{
+  if(e.data.size)chunks.push(e.data);
+ };
+
+ recorder.onstop=()=>{
+  const blob=new Blob(chunks,{type:"video/webm"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="my-story-video.webm";
+  a.click();
+  document.getElementById("status").innerText=
+  "Video download complete!";
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  stream.getTracks().forEach(t=>t.stop());
+ };
+
+ recorder.start();
+ document.getElementById("status").innerText=
+ "Video is being created... Please wait 15 seconds.";
+
+ setTimeout(()=>{
+  running=false;
+  recorder.stop();
+ },15000);
 }
 </script>
-
 </body>
 </html>
