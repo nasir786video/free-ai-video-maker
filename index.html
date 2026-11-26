@@ -1,34 +1,68 @@
-Create a FREE AI 3D Cartoon Story Video Maker app.
 
-App name: Free AI Cartoon Video Maker.
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free AI Cartoon Video Maker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#101827;color:white;font-family:Arial,sans-serif}
+.container{max-width:600px;margin:auto}
+h1{text-align:center;color:#ffd166;font-size:27px}
+p{text-align:center;color:#cbd5e1}
+textarea,select,input{width:100%;padding:13px;margin:9px 0;border:1px solid #526078;border-radius:9px;background:#202c40;color:white;font-size:16px}
+button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:10px;background:#ffb703;color:#111827;font-size:17px;font-weight:bold}
+button:disabled{opacity:.5}
+.panel{background:#1c293b;padding:16px;border-radius:13px;margin-top:16px}
+#status{white-space:pre-wrap;line-height:1.6;color:#ffe08a}
+small{color:#b8c4d6}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎬 Free AI Cartoon Video Maker</h1>
+<p>Apni kahani likhiye aur cartoon video banane ki taiyari kijiye.</p>
 
-Main goal:
-User writes a short story and clicks ONE button. The app automatically creates a complete 3D cartoon video with Hindi voice narration, background music, sound effects and multiple animated scenes.
+<div class="panel">
+<label>Apni chhoti kahani likhein:</label>
+<textarea id="story" rows="5" placeholder="Ek chhota bachcha jungle mein gaya..."></textarea>
 
-Features:
+<label>Video ka size:</label>
+<select id="ratio">
+<option value="9:16">9:16 YouTube Shorts</option>
+<option value="16:9">16:9 YouTube Video</option>
+</select>
 
-1. Simple story input box.
-2. One-click Generate Video button.
-3. Convert story into multiple scenes automatically.
-4. Generate consistent 3D cartoon characters.
-5. Create scene backgrounds according to the story.
-6. Add Hindi AI voice narration.
-7. Add suitable background music and sound effects.
-8. Combine scenes into one MP4 video.
-9. Support 9:16 Shorts and 16:9 YouTube videos.
-10. Allow MP4 video download.
-11. Target video length: 15 seconds to 1 minute.
-12. Mobile-friendly interface.
+<label>Video ki lambai:</label>
+<select id="duration">
+<option value="15">15 seconds</option>
+<option value="30">30 seconds</option>
+<option value="45">45 seconds</option>
+<option value="60">60 seconds</option>
+</select>
 
-IMPORTANT:
+<button id="generate">🎥 Generate Cartoon Video</button>
+<div id="status">Abhi AI video service connect nahi hai.</div>
+</div>
 
-- Use real video generation, not fake animations or emoji slideshows.
-- Do not show a fake video preview.
-- Connect actual image, voice and video generation services.
-- Prefer free and open-source services.
-- Never require paid subscriptions.
-- Show clear errors if a service is unavailable.
-- Keep the same cartoon characters throughout the story.
-- Make the interface simple enough for beginners.
+<div class="panel">
+<h3>Video banane ke liye zaroori service</h3>
+<p>Asli animated scenes, Hindi voice aur MP4 banane ke liye video-generation server/API connect karna zaroori hai.</p>
+<small>Yeh page abhi video generate nahi karta. Service connect hone par hi asli video banega.</small>
+</div>
+</div>
 
-The final result must be a working application, not just a visual demo.
+<script>
+document.getElementById("generate").addEventListener("click",()=>{
+ const story=document.getElementById("story").value.trim();
+ const status=document.getElementById("status");
+ if(!story){
+  status.textContent="Pehle apni kahani likhiye.";
+  return;
+ }
+ status.textContent="Aapki kahani taiyar hai.\nLekin asli AI video banane ki service abhi connect nahi hai.\nService connect hone ke baad hi cartoon video aur Hindi voice ban payegi.";
+});
+</script>
+</body>
+</html>
