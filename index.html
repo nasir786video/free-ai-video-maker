@@ -3,65 +3,109 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Free AI Cartoon Video Maker</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:18px;background:#101827;color:white;font-family:Arial,sans-serif}
+body{margin:0;padding:18px;background:#101827;color:white;font-family:Arial}
 .container{max-width:600px;margin:auto}
-h1{text-align:center;color:#ffd166;font-size:27px}
-p{text-align:center;color:#cbd5e1}
-textarea,select,input{width:100%;padding:13px;margin:9px 0;border:1px solid #526078;border-radius:9px;background:#202c40;color:white;font-size:16px}
-button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:10px;background:#ffb703;color:#111827;font-size:17px;font-weight:bold}
-button:disabled{opacity:.5}
+h1{text-align:center;color:#ffd166}
 .panel{background:#1c293b;padding:16px;border-radius:13px;margin-top:16px}
+textarea,select{width:100%;padding:13px;margin:10px 0;border-radius:9px;background:#202c40;color:white;font-size:16px}
+button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:10px;background:#ffb703;font-size:17px;font-weight:bold}
+button:disabled{opacity:.5}
 #status{white-space:pre-wrap;line-height:1.6;color:#ffe08a}
-small{color:#b8c4d6}
+video{width:100%;margin-top:15px;border-radius:10px}
+a{color:#ffd166}
 </style>
 </head>
 <body>
 <div class="container">
 <h1>🎬 Free AI Cartoon Video Maker</h1>
-<p>Apni kahani likhiye aur cartoon video banane ki taiyari kijiye.</p>
+<p>Apni kahani se cartoon video banaiye</p>
 
 <div class="panel">
-<label>Apni chhoti kahani likhein:</label>
-<textarea id="story" rows="5" placeholder="Ek chhota bachcha jungle mein gaya..."></textarea>
+<label>Apni kahani likhiye:</label>
+<textarea id="story" rows="5" placeholder="Ek bachcha jungle mein gaya aur use ek pyasa sher mila..."></textarea>
 
-<label>Video ka size:</label>
+<label>Video size:</label>
 <select id="ratio">
 <option value="9:16">9:16 YouTube Shorts</option>
-<option value="16:9">16:9 YouTube Video</option>
+<option value="16:9">16:9 YouTube</option>
 </select>
 
-<label>Video ki lambai:</label>
+<label>Video duration:</label>
 <select id="duration">
-<option value="15">15 seconds</option>
-<option value="30">30 seconds</option>
-<option value="45">45 seconds</option>
-<option value="60">60 seconds</option>
+<option value="4">4 Seconds</option>
+<option value="5">5 Seconds</option>
+<option value="6">6 Seconds</option>
+<option value="8">8 Seconds</option>
 </select>
 
-<button id="generate">🎥 Generate Cartoon Video</button>
-<div id="status">Abhi AI video service connect nahi hai.</div>
-</div>
+<button id="generate">🎥 Generate Video</button>
+<div id="status">Apni kahani likhkar Generate dabaiye.</div>
 
-<div class="panel">
-<h3>Video banane ke liye zaroori service</h3>
-<p>Asli animated scenes, Hindi voice aur MP4 banane ke liye video-generation server/API connect karna zaroori hai.</p>
-<small>Yeh page abhi video generate nahi karta. Service connect hone par hi asli video banega.</small>
+<video id="video" controls playsinline hidden></video>
+<a id="download" hidden download="my-cartoon-video.mp4">Download MP4</a>
 </div>
 </div>
 
 <script>
-document.getElementById("generate").addEventListener("click",()=>{
- const story=document.getElementById("story").value.trim();
- const status=document.getElementById("status");
- if(!story){
-  status.textContent="Pehle apni kahani likhiye.";
-  return;
- }
- status.textContent="Aapki kahani taiyar hai.\nLekin asli AI video banane ki service abhi connect nahi hai.\nService connect hone ke baad hi cartoon video aur Hindi voice ban payegi.";
+const API = "https://free-ai-video-maker-aa3a.onrender.com";
+
+const button = document.getElementById("generate");
+const statusBox = document.getElementById("status");
+const video = document.getElementById("video");
+const download = document.getElementById("download");
+
+button.addEventListener("click", async () => {
+  const story = document.getElementById("story").value.trim();
+
+  if (story.length < 8) {
+    statusBox.textContent = "Kam se kam 8 characters ki kahani likhiye.";
+    return;
+  }
+
+  button.disabled = true;
+  video.hidden = true;
+  download.hidden = true;
+  statusBox.textContent = "AI video ban raha hai. Kripya intezar karein...";
+
+  try {
+    const response = await fetch(API + "/generate", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        prompt: story,
+        duration_seconds: Number(document.getElementById("duration").value),
+        aspect_ratio: document.getElementById("ratio").value,
+        voice_language: "hi",
+        add_music: true
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Video generation failed");
+    }
+
+    if (!data.video_url) {
+      throw new Error("Video URL nahi mila.");
+    }
+
+    const videoUrl = API + data.video_url;
+    video.src = videoUrl;
+    video.hidden = false;
+    download.href = videoUrl;
+    download.hidden = false;
+
+    statusBox.textContent = data.message || "Video ready!";
+  } catch (error) {
+    statusBox.textContent = "Error: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 </script>
 </body>
