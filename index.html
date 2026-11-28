@@ -86,9 +86,16 @@ button.addEventListener("click", async () => {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.detail || "Video generation failed");
-    }
+if (!response.ok) {
+  const detail = data.detail;
+  const message = typeof detail === "string"
+    ? detail
+    : (detail && typeof detail === "object"
+      ? JSON.stringify(detail)
+      : "Video generation failed");
+
+  throw new Error(message);
+}
 
     if (!data.video_url) {
       throw new Error("Video URL nahi mila.");
